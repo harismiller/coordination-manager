@@ -161,3 +161,7 @@ std::unordered_map<std::pair<int, int>, int, pair_hash> SystemCompiler::getStand
     }
     return standby.individualLimits;
 }
+
+bool SystemCompiler::checkGeneralLimitActive() const {
+    return isGeneralLimitActive;
+}

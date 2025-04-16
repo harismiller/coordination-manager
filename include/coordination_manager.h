@@ -28,6 +28,7 @@ public:
     void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits);
     int getStandbyLimit() const;
     std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const;
+    bool checkGeneralLimitActive() const;
 
     // Agent management functions
     void addAgent(int agentID, const AgentState& state);

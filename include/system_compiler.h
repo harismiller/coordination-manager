@@ -57,6 +57,7 @@ public:
     void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits); // Set individualLimits
     int getStandbyLimit() const; // Get generalLimit
     std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const; // Get individualLimits
+    bool checkGeneralLimitActive() const;
 
     // Other getters
     std::string getHaltonFilePath() const;

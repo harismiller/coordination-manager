@@ -54,6 +54,7 @@ int main() {
         std::cout << "General Standby Limit: " << generalLimit << std::endl;
     } catch (const std::logic_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        std::cout << "isGeneralLimitActive: " << (manager.checkGeneralLimitActive() ? "true" : "false") << std::endl;
     }
 
     // Test lookahead functionality

@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 CoordinationManager::CoordinationManager() 
     : systemCompiler(""), agentData() 
 {
-    fs::path sourceDir = fs::path(__FILE__).parent_path();
+    fs::path sourceDir = fs::path(__FILE__).parent_path().parent_path();
     coordinationManagerDir = sourceDir.string();
     envDir = (sourceDir / "env").string();
 }
@@ -64,6 +64,9 @@ std::unordered_map<std::pair<int, int>, int, pair_hash> CoordinationManager::get
     return systemCompiler.getStandbyLimits();
 }
 
+bool CoordinationManager::checkGeneralLimitActive() const {
+    return systemCompiler.checkGeneralLimitActive();
+}
 
 // Agent management functions
 void CoordinationManager::addAgent(int agentID, const AgentState& state) {
