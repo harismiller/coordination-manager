@@ -16,6 +16,7 @@ add_executable(coordination_manager
     main.cpp
     coordination_manager.cpp
     system_compiler.cpp
+    agent_data.cpp
 )
 
 # Include directories

@@ -95,3 +95,31 @@ void SystemCompiler::compileSystem() {
     // Add any additional logic for system compilation here
     std::cout << "System compilation complete.\n";
 }
+
+void SystemCompiler::setLookahead(int lookahead) {
+    this->lookahead = lookahead;
+}
+
+std::string SystemCompiler::getHaltonFilePath() const {
+    return haltonFilePath;
+}
+
+std::unordered_map<std::pair<int, int>, int, pair_hash> SystemCompiler::getGridTallies() const {
+    return gridTallies;
+}
+
+std::unordered_map<std::pair<int, int>, std::string, pair_hash> SystemCompiler::getLabeledPoints() const {
+    return labeledPoints;
+}
+
+int SystemCompiler::getTotalPoints() const {
+    return totalPoints;
+}
+
+std::pair<int, int> SystemCompiler::getGridDimensions() const {
+    return gridDimensions;
+}
+
+int SystemCompiler::getLookahead() const {
+    return lookahead;
+}
