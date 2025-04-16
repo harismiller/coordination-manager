@@ -23,10 +23,10 @@ void SystemCompiler::parseHaltonPoints() {
         return;
     }
 
-    gridTallies.clear(); // Clear any existing data
-    labeledPoints.clear(); // Clear labeled points data
-    totalPoints = 0; // Reset total points
-    gridDimensions = {0, 0}; // Reset grid dimensions
+    gridTallies.clear();
+    labeledPoints.clear();
+    totalPoints = 0;
+    gridDimensions = {0, 0};
 
     std::string line;
     bool isHeader = true;
@@ -50,14 +50,9 @@ void SystemCompiler::parseHaltonPoints() {
 
         int xPos = static_cast<int>(x);
         int yPos = static_cast<int>(y);
-
-        // Increment tally at the grid position
         gridTallies[{xPos, yPos}] += 1;
-
-        // Update total points
         totalPoints++;
 
-        // Update grid dimensions
         gridDimensions.first = std::max(gridDimensions.first, xPos + 1);
         gridDimensions.second = std::max(gridDimensions.second, yPos + 1);
 
@@ -102,7 +97,6 @@ void SystemCompiler::compileSystem() {
     //               << ") has label: " << entry.second << "\n";
     // }
 
-    // Add any additional logic for system compilation here
     std::cout << "System compilation complete.\n";
 }
 
