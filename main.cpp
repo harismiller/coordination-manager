@@ -1,9 +1,8 @@
 #include "coordination_manager.h"
-#include "agent_data.h"
+#include "agent_state.h"
 #include <iostream>
 #include <string>
-
-
+#include <unordered_map>
 
 int main() {
     // Prompt the user for the Halton file path
@@ -20,16 +19,60 @@ int main() {
     CoordinationManager manager;
     manager.start(haltonFile);
 
-    manager.setLookahead(3); // Set lookahead to 5
-    int lookahead;
-    manager.getLookahead(lookahead); // Get the lookahead value
-    std::cout << "Current lookahead: " << lookahead << std::endl;
+    // Test setting and getting generalLimit
+    std::cout << "\nTesting generalLimit...\n";
+    manager.setStandbyLimit(10); // Set generalLimit to 10
+    try {
+        int generalLimit = manager.getStandbyLimit();
+        std::cout << "General Standby Limit: " << generalLimit << std::endl;
+    } catch (const std::logic_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
 
+    // Test setting and getting individualLimits
+    std::cout << "\nTesting individualLimits...\n";
+    std::unordered_map<std::pair<int, int>, int, pair_hash> individualLimits = {
+        {{0, 0}, 5},
+        {{1, 1}, 10},
+        {{2, 2}, 15}
+    };
+    manager.setStandbyLimit(individualLimits); // Set individualLimits
+    try {
+        auto retrievedLimits = manager.getStandbyLimits();
+        std::cout << "Individual Standby Limits:\n";
+        for (const auto& [key, value] : retrievedLimits) {
+            std::cout << "  Position (" << key.first << ", " << key.second << ") -> Limit: " << value << "\n";
+        }
+    } catch (const std::logic_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    // Test calling the wrong getter
+    std::cout << "\nTesting error handling for wrong getter...\n";
+    try {
+        int generalLimit = manager.getStandbyLimit(); // This should throw an error
+        std::cout << "General Standby Limit: " << generalLimit << std::endl;
+    } catch (const std::logic_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    // Test lookahead functionality
+    std::cout << "\nTesting lookahead...\n";
+    manager.setLookahead(5); // Set lookahead to 5
+    int lookahead = manager.getLookahead(lookahead);
+    std::cout << "Lookahead value: " << lookahead << std::endl;
+
+    manager.setLookahead(10); // Update lookahead to 10
+    lookahead = manager.getLookahead(lookahead);
+    std::cout << "Updated Lookahead value: " << lookahead << std::endl;
+
+    // Test agent management
+    std::cout << "\nTesting agent management...\n";
     AgentState agent1 = {
         {0.0, 0.0}, // Current position
-        "moving", // Status
+        "moving",   // Status
         {{1.0, 1.0}, {2.0, 2.0}, {3.0, 3.0}}, // Path plan
-        {'g', 'g','r'}, // Flags
+        {'g', 'g', 'r'}, // Flags
         0 // Plan index
     };
     manager.addAgent(1, agent1);

@@ -15,13 +15,21 @@ private:
 
 public:
     CoordinationManager();
+    ~CoordinationManager();
+    
     std::string getRepositoryDirectory() const;
     std::string getEnvironmentDirectory() const;
     void start(const std::string& haltonFile);
 
+    // System Compiler management functions
     void setLookahead(int lookahead);
-    void getLookahead(int& lookahead) const;
+    int getLookahead(int& lookahead) const;
+    void setStandbyLimit(int generalLimit);
+    void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits);
+    int getStandbyLimit() const;
+    std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const;
 
+    // Agent management functions
     void addAgent(int agentID, const AgentState& state);
     void updateAgent(int agentID, const AgentState& state);
     void removeAgent(int agentID);

@@ -1,5 +1,6 @@
 #include "coordination_manager.h"
 #include "system_compiler.h"
+#include "agent_state.h"
 #include "agent_data.h"
 #include <iostream>
 #include <filesystem>
@@ -13,6 +14,8 @@ CoordinationManager::CoordinationManager()
     coordinationManagerDir = sourceDir.string();
     envDir = (sourceDir / "env").string();
 }
+
+CoordinationManager::~CoordinationManager() {}
 
 std::string CoordinationManager::getRepositoryDirectory() const {
     return coordinationManagerDir;
@@ -34,15 +37,35 @@ void CoordinationManager::start(const std::string& haltonFile) {
     compiler.compileSystem();
 }
 
+
+// System Compiler management functions
 void CoordinationManager::setLookahead(int lookahead) {
     systemCompiler.setLookahead(lookahead);
     std::cout << "Lookahead set to: " << systemCompiler.getLookahead() << std::endl;
 }
 
-void CoordinationManager::getLookahead(int& lookahead) const {
-    lookahead = systemCompiler.getLookahead();
+int CoordinationManager::getLookahead(int& lookahead) const {
+    return systemCompiler.getLookahead();
 }
 
+void CoordinationManager::setStandbyLimit(int generalLimit) {
+    systemCompiler.setStandbyLimit(generalLimit);
+}
+
+void CoordinationManager::setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits) {
+    systemCompiler.setStandbyLimit(individualLimits);
+}
+
+int CoordinationManager::getStandbyLimit() const {
+    return systemCompiler.getStandbyLimit();
+}
+
+std::unordered_map<std::pair<int, int>, int, pair_hash> CoordinationManager::getStandbyLimits() const {
+    return systemCompiler.getStandbyLimits();
+}
+
+
+// Agent management functions
 void CoordinationManager::addAgent(int agentID, const AgentState& state) {
     agentData.updateAgent(agentID, state);
 }

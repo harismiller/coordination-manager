@@ -4,7 +4,17 @@
 #include <sstream>
 #include <unordered_map>
 
-SystemCompiler::SystemCompiler(const std::string& filePath) : haltonFilePath(filePath) {}
+SystemCompiler::SystemCompiler(const std::string& filePath)
+    : haltonFilePath(filePath), totalPoints(0), gridDimensions({0, 0}), lookahead(0), isGeneralLimitActive(true) {
+    standby.generalLimit = 0; // Initialize the union with generalLimit = 0
+}
+
+SystemCompiler::~SystemCompiler() {
+    if (!isGeneralLimitActive) {
+        // Destroy individualLimits if it is active
+        standby.individualLimits.~unordered_map();
+    }
+}
 
 void SystemCompiler::parseHaltonPoints() {
     std::ifstream file(haltonFilePath);
@@ -122,4 +132,38 @@ std::pair<int, int> SystemCompiler::getGridDimensions() const {
 
 int SystemCompiler::getLookahead() const {
     return lookahead;
+}
+
+void SystemCompiler::setStandbyLimit(int generalLimit) {
+    if (!isGeneralLimitActive) {
+        // Destroy the current individualLimits before switching
+        standby.individualLimits.~unordered_map();
+    }
+    standby.generalLimit = generalLimit;
+    isGeneralLimitActive = true;
+}
+
+void SystemCompiler::setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits) {
+    if (isGeneralLimitActive) {
+        // Switch from generalLimit to individualLimits
+        new (&standby.individualLimits) std::unordered_map<std::pair<int, int>, int, pair_hash>(individualLimits);
+    } else {
+        // Replace the existing individualLimits
+        standby.individualLimits = individualLimits;
+    }
+    isGeneralLimitActive = false;
+}
+
+int SystemCompiler::getStandbyLimit() const {
+    if (!isGeneralLimitActive) {
+        throw std::logic_error("standbyLimits is currently set to individualLimits, not generalLimit.");
+    }
+    return standby.generalLimit;
+}
+
+std::unordered_map<std::pair<int, int>, int, pair_hash> SystemCompiler::getStandbyLimits() const {
+    if (isGeneralLimitActive) {
+        throw std::logic_error("standbyLimits is currently set to generalLimit, not individualLimits.");
+    }
+    return standby.individualLimits;
 }
