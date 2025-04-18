@@ -1,7 +1,7 @@
-#include "coordination_manager.h"
-#include "system_compiler.h"
-#include "agent_state.h"
-#include "agent_data.h"
+#include "coordination-manager/coordination_manager.h"
+#include "coordination-manager/system_compiler.h"
+#include "coordination-manager/agent_state.h"
+#include "coordination-manager/agent_data.h"
 #include <iostream>
 #include <filesystem>
 
@@ -44,7 +44,7 @@ void CoordinationManager::setLookahead(int lookahead) {
     std::cout << "Lookahead set to: " << systemCompiler.getLookahead() << std::endl;
 }
 
-int CoordinationManager::getLookahead(int& lookahead) const {
+int CoordinationManager::getLookahead() const {
     return systemCompiler.getLookahead();
 }
 

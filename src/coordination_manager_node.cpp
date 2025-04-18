@@ -1,5 +1,16 @@
-#include "coordination_manager.h"
-#include "agent_state.h"
+// #include <cstdio>
+
+// int main(int argc, char ** argv)
+// {
+//   (void) argc;
+//   (void) argv;
+
+//   printf("hello world coordination-manager package\n");
+//   return 0;
+// }
+
+#include "coordination-manager/coordination_manager.h"
+#include "coordination-manager/agent_state.h"
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -60,11 +71,11 @@ int main() {
     // Test lookahead functionality
     std::cout << "\nTesting lookahead...\n";
     manager.setLookahead(5); // Set lookahead to 5
-    int lookahead = manager.getLookahead(lookahead);
+    int lookahead = manager.getLookahead();
     std::cout << "Lookahead value: " << lookahead << std::endl;
 
     manager.setLookahead(10); // Update lookahead to 10
-    lookahead = manager.getLookahead(lookahead);
+    lookahead = manager.getLookahead();
     std::cout << "Updated Lookahead value: " << lookahead << std::endl;
 
     // Test agent management

@@ -1,7 +1,7 @@
 #ifndef AGENT_DATA_H
 #define AGENT_DATA_H
 
-#include "agent_state.h"
+#include "coordination-manager/agent_state.h"
 #include <unordered_map>
 #include <list>
 

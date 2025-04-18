@@ -1,8 +1,8 @@
 #ifndef COORDINATION_MANAGER_H
 #define COORDINATION_MANAGER_H
 
-#include "system_compiler.h"
-#include "agent_data.h"
+#include "coordination-manager/system_compiler.h"
+#include "coordination-manager/agent_data.h"
 #include <string>
 
 class CoordinationManager {
@@ -23,7 +23,7 @@ public:
 
     // System Compiler management functions
     void setLookahead(int lookahead);
-    int getLookahead(int& lookahead) const;
+    int getLookahead() const;
     void setStandbyLimit(int generalLimit);
     void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits);
     int getStandbyLimit() const;

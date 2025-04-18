@@ -1,23 +1,44 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.8)
+project(coordination-manager)
 
-# Project name and version
-project(CoordinationManager VERSION 1.0)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-# # Set GCC as the compiler
-# set(CMAKE_C_COMPILER gcc)
-# set(CMAKE_CXX_COMPILER g++)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-# Add the executable
-add_executable(coordination_manager
-    main.cpp                  # Main file is now outside src/
-    src/coordination_manager.cpp
-    src/system_compiler.cpp
-    src/agent_data.cpp
+add_executable(coordination_manager 
+  src/coordination_manager_node.cpp
+  src/coordination_manager.cpp
+  src/system_compiler.cpp
+  src/agent_data.cpp
+)
+target_include_directories(coordination_manager PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(coordination_manager PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(
+  coordination_manager
+  "rclcpp"
+  "std_msgs"
 )
 
-# Include directories
-target_include_directories(coordination_manager PRIVATE include)
+install(TARGETS coordination_manager
+  DESTINATION lib/${PROJECT_NAME})
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_package()
