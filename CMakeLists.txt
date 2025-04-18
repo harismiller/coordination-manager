@@ -10,6 +10,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
+# ==========================
+# Coordination Manager Node
+# ==========================
 add_executable(coordination_manager 
   src/coordination_manager_node.cpp
   src/coordination_manager.cpp
@@ -26,7 +29,28 @@ ament_target_dependencies(
   "std_msgs"
 )
 
-install(TARGETS coordination_manager
+# ==========================
+# Behavior Tree Framework
+# ==========================
+add_executable(behavior_tree
+  src/BT/bt_control.cpp
+  src/BT/behavior_tree.cpp
+  src/BT/nodes/action_node.cpp
+  src/BT/nodes/condition_node.cpp
+  src/BT/nodes/sequence_node.cpp
+  src/BT/nodes/parallel_node.cpp
+)
+target_include_directories(behavior_tree PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/BT> 
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(behavior_tree PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(
+  behavior_tree 
+  "rclcpp"
+)
+install(TARGETS behavior_tree
+                coordination_manager
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
