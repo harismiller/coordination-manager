@@ -1,167 +1,94 @@
 #include "coordination-manager/system_compiler.h"
+#include "coordination-manager/environment_compiler.h"
+#include "coordination-manager/agent_state.h"
+#include "coordination-manager/agent_data.h"
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <unordered_map>
+#include <filesystem>
 
-SystemCompiler::SystemCompiler(const std::string& filePath)
-    : haltonFilePath(filePath), totalPoints(0), gridDimensions({0, 0}), lookahead(0), isGeneralLimitActive(true) {
-    standby.generalLimit = 0; // Initialize the union with generalLimit = 0
+namespace fs = std::filesystem;
+
+SystemCompiler::SystemCompiler() 
+    : environmentCompiler(""), agentData() 
+{
+    fs::path sourceDir = fs::path(__FILE__).parent_path().parent_path();
+    systemCompilerDir = sourceDir.string();
+    envDir = (sourceDir / "env").string();
 }
 
-SystemCompiler::~SystemCompiler() {
-    if (!isGeneralLimitActive) {
-        // Destroy individualLimits if it is active
-        standby.individualLimits.~unordered_map();
-    }
+SystemCompiler::~SystemCompiler() {}
+
+std::string SystemCompiler::getRepositoryDirectory() const {
+    return systemCompilerDir;
 }
 
-void SystemCompiler::parseHaltonPoints() {
-    std::ifstream file(haltonFilePath);
-    if (!file.is_open()) {
-        std::cerr << "Error loading Halton points: Unable to open file " << haltonFilePath << std::endl;
-        return;
-    }
-
-    gridTallies.clear();
-    labeledPoints.clear();
-    totalPoints = 0;
-    gridDimensions = {0, 0};
-
-    std::string line;
-    bool isHeader = true;
-
-    while (std::getline(file, line)) {
-        if (isHeader) {
-            isHeader = false; // Skip the header line
-            continue;
-        }
-
-        std::istringstream lineStream(line);
-        std::string xStr, yStr, label;
-        if (!std::getline(lineStream, xStr, ',') ||
-            !std::getline(lineStream, yStr, ',')) {
-            continue; // Skip malformed lines
-        }
-
-        // Convert x and y to integers (grid positions)
-        double x = std::stod(xStr);
-        double y = std::stod(yStr);
-
-        int xPos = static_cast<int>(x);
-        int yPos = static_cast<int>(y);
-        gridTallies[{xPos, yPos}] += 1;
-        totalPoints++;
-
-        gridDimensions.first = std::max(gridDimensions.first, xPos + 1);
-        gridDimensions.second = std::max(gridDimensions.second, yPos + 1);
-
-        // If a label exists, store it in labeledPoints
-        if (std::getline(lineStream, label, ',') && !label.empty()) {
-            labeledPoints[{xPos, yPos}] = label;
-            // std::cout << "Found label: " << label << " at position (" << xPos << ", " << yPos << ")\n";
-        }
-    }
-
-    file.close();
-
-    // // Output the tallies
-    // std::cout << "Grid Tallies:\n";
-    // for (const auto& entry : gridTallies) {
-    //     std::cout << "Position (" << entry.first.first << ", " << entry.first.second
-    //               << ") has tally: " << entry.second << "\n";
-    // }
-
-    std::cout << "Total points: " << totalPoints << "\n";
-    std::cout << "Grid dimensions: (" << gridDimensions.first << ", " << gridDimensions.second << ")\n";
-    std::cout << "Halton points loaded from " << haltonFilePath << std::endl;
+std::string SystemCompiler::getEnvironmentDirectory() const {
+    return envDir;
 }
 
-void SystemCompiler::compileSystem() {
-    // Ensure Halton points are parsed before compiling
-    if (gridTallies.empty()) {
-        parseHaltonPoints();
-    }
+void SystemCompiler::start(const std::string& haltonFile) {
+    std::cout << "Repository directory: " << systemCompilerDir << std::endl;
+    std::cout << "Environment directory: " << envDir << std::endl;
 
-    // // Process grid tallies
-    // std::cout << "Compiling system using grid tallies...\n";
-    // for (const auto& entry : gridTallies) {
-    //     std::cout << "Position (" << entry.first.first << ", " << entry.first.second
-    //               << ") has tally: " << entry.second << "\n";
-    // }
+    std::cout << "Starting System Compiler..." << std::endl;
 
-    // // Process labeled points
-    // std::cout << "Processing labeled points...\n";
-    // for (const auto& entry : labeledPoints) {
-    //     std::cout << "Position (" << entry.first.first << ", " << entry.first.second
-    //               << ") has label: " << entry.second << "\n";
-    // }
+    fs::path haltonFilePath = fs::path(envDir) / haltonFile;
 
-    std::cout << "System compilation complete.\n";
+    EnvironmentCompiler compiler(haltonFilePath.string());
+    compiler.compileEnvironment();
 }
 
+
+// Environment Compiler management functions
 void SystemCompiler::setLookahead(int lookahead) {
-    this->lookahead = lookahead;
-}
-
-std::string SystemCompiler::getHaltonFilePath() const {
-    return haltonFilePath;
-}
-
-std::unordered_map<std::pair<int, int>, int, pair_hash> SystemCompiler::getGridTallies() const {
-    return gridTallies;
-}
-
-std::unordered_map<std::pair<int, int>, std::string, pair_hash> SystemCompiler::getLabeledPoints() const {
-    return labeledPoints;
-}
-
-int SystemCompiler::getTotalPoints() const {
-    return totalPoints;
-}
-
-std::pair<int, int> SystemCompiler::getGridDimensions() const {
-    return gridDimensions;
+    environmentCompiler.setLookahead(lookahead);
+    std::cout << "Lookahead set to: " << environmentCompiler.getLookahead() << std::endl;
 }
 
 int SystemCompiler::getLookahead() const {
-    return lookahead;
+    return environmentCompiler.getLookahead();
 }
 
 void SystemCompiler::setStandbyLimit(int generalLimit) {
-    if (!isGeneralLimitActive) {
-        // Destroy the current individualLimits before switching
-        standby.individualLimits.~unordered_map();
-    }
-    standby.generalLimit = generalLimit;
-    isGeneralLimitActive = true;
+    environmentCompiler.setStandbyLimit(generalLimit);
 }
 
 void SystemCompiler::setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits) {
-    if (isGeneralLimitActive) {
-        // Switch from generalLimit to individualLimits
-        new (&standby.individualLimits) std::unordered_map<std::pair<int, int>, int, pair_hash>(individualLimits);
-    } else {
-        // Replace the existing individualLimits
-        standby.individualLimits = individualLimits;
-    }
-    isGeneralLimitActive = false;
+    environmentCompiler.setStandbyLimit(individualLimits);
 }
 
 int SystemCompiler::getStandbyLimit() const {
-    if (!isGeneralLimitActive) {
-        throw std::logic_error("standbyLimits is currently set to individualLimits, not generalLimit.");
-    }
-    return standby.generalLimit;
+    return environmentCompiler.getStandbyLimit();
 }
 
 std::unordered_map<std::pair<int, int>, int, pair_hash> SystemCompiler::getStandbyLimits() const {
-    if (isGeneralLimitActive) {
-        throw std::logic_error("standbyLimits is currently set to generalLimit, not individualLimits.");
-    }
-    return standby.individualLimits;
+    return environmentCompiler.getStandbyLimits();
 }
 
 bool SystemCompiler::checkGeneralLimitActive() const {
-    return isGeneralLimitActive;
+    return environmentCompiler.checkGeneralLimitActive();
+}
+
+// Agent management functions
+void SystemCompiler::addAgent(int agentID, const AgentState& state) {
+    agentData.updateAgent(agentID, state);
+}
+
+void SystemCompiler::updateAgent(int agentID, const AgentState& state) {
+    agentData.updateAgent(agentID, state);
+}
+
+void SystemCompiler::removeAgent(int agentID) {
+    agentData.removeAgent(agentID);
+}
+
+const AgentState* SystemCompiler::getAgent(int agentID) const {
+    return agentData.getAgent(agentID);
+}
+
+bool SystemCompiler::hasAgent(int agentID) const {
+    return agentData.hasAgent(agentID);
+}
+
+std::list<int> SystemCompiler::getAllAgentIDs() const {
+    return agentData.getAllAgentIDs();
 }
