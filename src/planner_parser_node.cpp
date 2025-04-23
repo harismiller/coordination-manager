@@ -6,7 +6,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include "ltl_automaton_msgs/msg/relay_response.hpp"
 #include "ltl_automaton_msgs/msg/ltl_plan.hpp"
-#include "interfaces_hmm_sim/srv/path_plan.hpp"
+#include "interfaces_hmm_sim/msg/path_plan.hpp"
 
 class PlannerParserNode : public rclcpp::Node
 {

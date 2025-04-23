@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(ltl_automaton_msgs REQUIRED)  # Add dependency for ltl_automaton_msgs
+find_package(ltl_automaton_msgs REQUIRED)
 find_package(interfaces_hmm_sim REQUIRED)
 
 # ==========================
@@ -67,9 +67,26 @@ ament_target_dependencies(
   planner_parser_node
   "rclcpp"
   "std_msgs"
-  "ltl_automaton_msgs"  # Dependency for RelayResponse and LTLPlan messages
+  "ltl_automaton_msgs"
   "geometry_msgs"
-  "interfaces_hmm_sim"  # Add this dependency
+  "interfaces_hmm_sim"
+)
+
+# ==========================
+# Status Agent Fail Publisher Node
+# ==========================
+add_executable(status_agent_fail_publisher
+  src/planner_integration_test_node.cpp
+)
+target_include_directories(status_agent_fail_publisher PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(status_agent_fail_publisher PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(
+  status_agent_fail_publisher
+  "rclcpp"
+  "geometry_msgs"
+  "interfaces_hmm_sim"
 )
 
 # ==========================
@@ -79,6 +96,7 @@ install(TARGETS
   behavior_tree_test
   system_compiler_test
   planner_parser_node
+  status_agent_fail_publisher  # Add the new node to the installation
   DESTINATION lib/${PROJECT_NAME})
 
 # ==========================
