@@ -19,7 +19,6 @@ union standbyLimits {
     int generalLimit;
     std::unordered_map<std::pair<int, int>, int, pair_hash> individualLimits;
 
-    // Constructor and destructor
     standbyLimits() : generalLimit(0) {}
     ~standbyLimits() {}
 };
@@ -40,23 +39,25 @@ private:
     union standbyLimits standby;
     bool isGeneralLimitActive = true;
 
+    std::vector<std::pair<double, double>> haltonPoints; // Store x, y values
+
     void parseHaltonPoints();
 
 public:
-    EnvironmentCompiler(const std::string& filePath);
-    ~EnvironmentCompiler(); // Destructor to clean up the union
+    EnvironmentCompiler();
+    ~EnvironmentCompiler();
 
-    void compileEnvironment();
+    void compileEnvironment(const std::string& filePath);
 
     // Lookahead management
     void setLookahead(int lookahead);
     int getLookahead() const;
 
     // Standby limit management
-    void setStandbyLimit(int generalLimit); // Set generalLimit
-    void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits); // Set individualLimits
-    int getStandbyLimit() const; // Get generalLimit
-    std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const; // Get individualLimits
+    void setStandbyLimit(int generalLimit);
+    void setStandbyLimit(const std::unordered_map<std::pair<int, int>, int, pair_hash>& individualLimits);
+    int getStandbyLimit() const;
+    std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const;
     bool checkGeneralLimitActive() const;
 
     // Other getters
@@ -65,6 +66,8 @@ public:
     std::unordered_map<std::pair<int, int>, std::string, pair_hash> getLabeledPoints() const;
     int getTotalPoints() const;
     std::pair<int, int> getGridDimensions() const;
+    std::pair<double, double> getPointByIndex(size_t index) const;
+    std::vector<std::pair<double, double>> getHaltonPoints() const;
 };
 
 #endif // ENVIRONMENT_COMPILER_H

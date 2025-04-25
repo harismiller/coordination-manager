@@ -13,6 +13,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(ltl_automaton_msgs REQUIRED)
 find_package(interfaces_hmm_sim REQUIRED)
 
+# Find SQLite3
+find_package(SQLite3 REQUIRED)
+
 # ==========================
 # System Compiler Test Node
 # ==========================
@@ -31,6 +34,26 @@ ament_target_dependencies(
   "rclcpp"
   "std_msgs"
 )
+
+# ==========================
+# System Compiler Node
+# ==========================
+add_executable(system_compiler_node
+  src/system_compiler_node.cpp
+  src/system_compiler.cpp
+  src/environment_compiler.cpp
+  src/agent_data.cpp
+)
+target_include_directories(system_compiler_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(system_compiler_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(
+  system_compiler_node
+  "rclcpp"
+  "std_msgs"
+)
+target_link_libraries(system_compiler_node SQLite::SQLite3)
 
 # ==========================
 # Behavior Tree Framework
@@ -71,6 +94,7 @@ ament_target_dependencies(
   "geometry_msgs"
   "interfaces_hmm_sim"
 )
+target_link_libraries(planner_parser_node SQLite::SQLite3)
 
 # ==========================
 # Status Agent Fail Publisher Node
@@ -95,8 +119,9 @@ ament_target_dependencies(
 install(TARGETS 
   behavior_tree_test
   system_compiler_test
+  system_compiler_node
   planner_parser_node
-  status_agent_fail_publisher  # Add the new node to the installation
+  status_agent_fail_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 # ==========================

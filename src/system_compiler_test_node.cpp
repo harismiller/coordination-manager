@@ -113,5 +113,13 @@ int main() {
         std::cout << "Agent 1 does not exist." << std::endl;
     }
 
+    // Test Halton points
+    std::cout << "\nTesting Halton points...\n";
+    std::vector<std::pair<double, double>> haltonPoints = system.getHaltonPoints();
+    std::cout << "Halton points:\n";
+    for (const auto& point : haltonPoints) {
+        std::cout << "  (" << point.first << ", " << point.second << ")\n";
+    }
+
     return 0;
 }

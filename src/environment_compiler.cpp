@@ -2,16 +2,15 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
+#include <stdexcept>
 
-EnvironmentCompiler::EnvironmentCompiler(const std::string& filePath)
-    : haltonFilePath(filePath), totalPoints(0), gridDimensions({0, 0}), lookahead(0), isGeneralLimitActive(true) {
+EnvironmentCompiler::EnvironmentCompiler()
+    : totalPoints(0), gridDimensions({0, 0}), lookahead(0), isGeneralLimitActive(true) {
     standby.generalLimit = 0; // Initialize the union with generalLimit = 0
 }
 
 EnvironmentCompiler::~EnvironmentCompiler() {
     if (!isGeneralLimitActive) {
-        // Destroy individualLimits if it is active
         standby.individualLimits.~unordered_map();
     }
 }
@@ -25,6 +24,7 @@ void EnvironmentCompiler::parseHaltonPoints() {
 
     gridTallies.clear();
     labeledPoints.clear();
+    haltonPoints.clear(); // Clear the vector before populating
     totalPoints = 0;
     gridDimensions = {0, 0};
 
@@ -44,10 +44,17 @@ void EnvironmentCompiler::parseHaltonPoints() {
             continue; // Skip malformed lines
         }
 
-        // Convert x and y to integers (grid positions)
+        // Convert x and y to doubles
         double x = std::stod(xStr);
         double y = std::stod(yStr);
 
+        // std::cout << "Parsed point: (" << x << ", " << y << ")\n";
+
+        // Store the point in the vector
+        haltonPoints.emplace_back(x, y);
+        // std::cout << "Stored point: (" << haltonPoints.back().first << ", " << haltonPoints.back().second << ")\n";
+
+        // Update grid tallies and dimensions
         int xPos = static_cast<int>(x);
         int yPos = static_cast<int>(y);
         gridTallies[{xPos, yPos}] += 1;
@@ -65,6 +72,12 @@ void EnvironmentCompiler::parseHaltonPoints() {
 
     file.close();
 
+    // // Print Halton points for debugging
+    // std::cout << "Halton points loaded:\n";
+    // for (const auto& point : haltonPoints) {
+    //     std::cout << "  (" << point.first << ", " << point.second << ")\n";
+    // }
+
     // // Output the tallies
     // std::cout << "Grid Tallies:\n";
     // for (const auto& entry : gridTallies) {
@@ -77,7 +90,8 @@ void EnvironmentCompiler::parseHaltonPoints() {
     std::cout << "Halton points loaded from " << haltonFilePath << std::endl;
 }
 
-void EnvironmentCompiler::compileEnvironment() {
+void EnvironmentCompiler::compileEnvironment(const std::string& filePath) {
+    haltonFilePath = filePath;
     // Ensure Halton points are parsed before compiling
     if (gridTallies.empty()) {
         parseHaltonPoints();
@@ -95,6 +109,12 @@ void EnvironmentCompiler::compileEnvironment() {
     // for (const auto& entry : labeledPoints) {
     //     std::cout << "Position (" << entry.first.first << ", " << entry.first.second
     //               << ") has label: " << entry.second << "\n";
+    // }
+
+    // Print Halton points for debugging
+    // std::cout << "Halton points loaded:\n";
+    // for (const auto& point : haltonPoints) {
+    //     std::cout << "  (" << point.first << ", " << point.second << ")\n";
     // }
 
     std::cout << "Environment compilation complete.\n";
@@ -165,3 +185,16 @@ std::unordered_map<std::pair<int, int>, int, pair_hash> EnvironmentCompiler::get
 bool EnvironmentCompiler::checkGeneralLimitActive() const {
     return isGeneralLimitActive;
 }
+
+std::pair<double, double> EnvironmentCompiler::getPointByIndex(size_t index) const {
+    if (index >= haltonPoints.size()) {
+        throw std::out_of_range("Index out of range for Halton points");
+    }
+    return haltonPoints[index];
+}
+
+std::vector<std::pair<double, double>> EnvironmentCompiler::getHaltonPoints() const {
+    std::cout << "Size of Halton points: " << haltonPoints.size() << std::endl;
+    return haltonPoints;
+}
+

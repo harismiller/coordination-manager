@@ -8,10 +8,11 @@
 namespace fs = std::filesystem;
 
 SystemCompiler::SystemCompiler() 
-    : environmentCompiler(""), agentData() 
+    : environmentCompiler(), agentData() 
 {
     fs::path sourceDir = fs::path(__FILE__).parent_path().parent_path();
     systemCompilerDir = sourceDir.string();
+    dbDir = (sourceDir / "db").string();
     envDir = (sourceDir / "env").string();
 }
 
@@ -25,6 +26,10 @@ std::string SystemCompiler::getEnvironmentDirectory() const {
     return envDir;
 }
 
+std::string SystemCompiler::getDatabaseDirectory() const {
+    return dbDir;
+}
+
 void SystemCompiler::start(const std::string& haltonFile) {
     std::cout << "Repository directory: " << systemCompilerDir << std::endl;
     std::cout << "Environment directory: " << envDir << std::endl;
@@ -33,8 +38,7 @@ void SystemCompiler::start(const std::string& haltonFile) {
 
     fs::path haltonFilePath = fs::path(envDir) / haltonFile;
 
-    EnvironmentCompiler compiler(haltonFilePath.string());
-    compiler.compileEnvironment();
+    environmentCompiler.compileEnvironment(haltonFilePath.string());
 }
 
 
@@ -68,6 +72,14 @@ bool SystemCompiler::checkGeneralLimitActive() const {
     return environmentCompiler.checkGeneralLimitActive();
 }
 
+std::pair<double,double> SystemCompiler::getPointByIndex(size_t index) const {
+    return environmentCompiler.getPointByIndex(index);
+}
+
+std::vector<std::pair<double,double>> SystemCompiler::getHaltonPoints() const {
+    return environmentCompiler.getHaltonPoints();
+}
+
 // Agent management functions
 void SystemCompiler::addAgent(int agentID, const AgentState& state) {
     agentData.updateAgent(agentID, state);
@@ -92,3 +104,4 @@ bool SystemCompiler::hasAgent(int agentID) const {
 std::list<int> SystemCompiler::getAllAgentIDs() const {
     return agentData.getAllAgentIDs();
 }
+

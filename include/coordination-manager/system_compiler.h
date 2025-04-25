@@ -9,6 +9,7 @@ class SystemCompiler {
 private:
     std::string systemCompilerDir;
     std::string envDir;
+    std::string dbDir;
 
     EnvironmentCompiler environmentCompiler;
     AgentData agentData;
@@ -19,6 +20,7 @@ public:
     
     std::string getRepositoryDirectory() const;
     std::string getEnvironmentDirectory() const;
+    std::string getDatabaseDirectory() const;
     void start(const std::string& haltonFile);
 
     // Environment Compiler management functions
@@ -29,6 +31,8 @@ public:
     int getStandbyLimit() const;
     std::unordered_map<std::pair<int, int>, int, pair_hash> getStandbyLimits() const;
     bool checkGeneralLimitActive() const;
+    std::pair<double, double> getPointByIndex(size_t index) const;
+    std::vector<std::pair<double, double>> getHaltonPoints() const;
 
     // Agent management functions
     void addAgent(int agentID, const AgentState& state);
