@@ -18,6 +18,18 @@ public:
     PlannerParserNode()
         : Node("planner_parser_node")
     {
+        // Declare and get the 'db_directory' parameter
+        this->declare_parameter<std::string>("db_directory", "./db");
+        db_directory_ = this->get_parameter("db_directory").as_string();
+
+        RCLCPP_INFO(this->get_logger(), "Using database directory: %s", db_directory_.c_str());
+
+        // Initialize the SQLite database
+        initializeDatabase();
+
+        // Print the lookahead value from the database
+        printLookaheadValue();
+
         // Subscribe to the three topics within the namespace
         replanning_response_sub_ = this->create_subscription<ltl_automaton_msgs::msg::RelayResponse>(
             "replanning_response", 10,
@@ -30,7 +42,66 @@ public:
         RCLCPP_INFO(this->get_logger(), "PlannerParserNode started in namespace: %s", this->get_namespace());
     }
 
+    ~PlannerParserNode()
+    {
+        if (db_)
+        {
+            sqlite3_close(db_);
+            RCLCPP_INFO(this->get_logger(), "Database connection closed.");
+        }
+    }
+
 private:
+    std::string db_directory_; // Store the database directory path
+    sqlite3 *db_ = nullptr;    // SQLite database handle
+
+    void initializeDatabase()
+    {
+        std::string db_path = db_directory_ + "/system_compiler.db";
+        int rc = sqlite3_open(db_path.c_str(), &db_);
+        if (rc)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Can't open database: %s", sqlite3_errmsg(db_));
+            db_ = nullptr;
+        }
+        else
+        {
+            RCLCPP_INFO(this->get_logger(), "Database opened successfully: %s", db_path.c_str());
+        }
+    }
+
+    void printLookaheadValue()
+    {
+        if (!db_)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Database is not initialized.");
+            return;
+        }
+
+        const char *sql = "SELECT value FROM compiled_data WHERE key = 'lookahead';";
+        sqlite3_stmt *stmt;
+
+        int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Failed to prepare statement: %s", sqlite3_errmsg(db_));
+            return;
+        }
+
+        rc = sqlite3_step(stmt);
+        if (rc == SQLITE_ROW)
+        {
+            int lookahead = sqlite3_column_int(stmt, 0);
+            RCLCPP_INFO(this->get_logger(), "Lookahead value from database: %d", lookahead);
+        }
+        else
+        {
+            RCLCPP_WARN(this->get_logger(), "No lookahead value found in the database.");
+        }
+
+        sqlite3_finalize(stmt);
+    }
+
     // Callback for replanning_response topic
     void replanningResponseCallback(const ltl_automaton_msgs::msg::RelayResponse::SharedPtr msg)
     {

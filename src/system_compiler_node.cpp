@@ -65,6 +65,19 @@ private:
             return;
         }
 
+        const char *pragma_sql = "PRAGMA journal_mode=WAL;";
+        char *errMsg = nullptr;
+        rc = sqlite3_exec(db_, pragma_sql, nullptr, nullptr, &errMsg);
+        if (rc != SQLITE_OK)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set WAL mode: %s", errMsg);
+            sqlite3_free(errMsg);
+        }
+        else
+        {
+            RCLCPP_INFO(this->get_logger(), "WAL mode enabled for SQLite.");
+        }
+
         // Create a table for storing compiled data
         //   DROP TABLE IF EXISTS compiled_data;
         const char *sql = R"(
@@ -81,7 +94,6 @@ private:
             );
         )";
 
-        char *errMsg = nullptr;
         rc = sqlite3_exec(db_, sql, nullptr, nullptr, &errMsg);
         if (rc != SQLITE_OK)
         {
