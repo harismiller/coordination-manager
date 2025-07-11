@@ -2,15 +2,19 @@
 #define AGENT_STATE_H
 
 #include <string>
-#include <list>
+#include <vector>
 #include <utility>
+#include <stdbool.h>
 
 struct AgentState {
     std::pair<double, double> currentPosition;
-    std::string status;
-    std::list<std::pair<double, double>> pathPlan;
-    std::list<char> flags;
+    std::vector<std::pair<double, double>> waypoints;
+    std::vector<char> actions;
+    std::vector<int> index;
     int planIndex;
+    bool agentStatus;
+    int curTask;
+    bool taskStatus;
 };
 
 #endif // AGENT_STATE_H

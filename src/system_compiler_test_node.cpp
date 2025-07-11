@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <stdbool.h>
 
 int main() {
     // Prompt the user for the Halton file path
@@ -82,10 +83,12 @@ int main() {
     std::cout << "\nTesting agent management...\n";
     AgentState agent1 = {
         {0.0, 0.0}, // Current position
-        "moving",   // Status
         {{1.0, 1.0}, {2.0, 2.0}, {3.0, 3.0}}, // Path plan
         {'g', 'g', 'r'}, // Flags
-        0 // Plan index
+        0, // Plan index
+        true, // Status
+        8, // Current task
+        true // Task status
     };
     system.addAgent(1, agent1);
     std::cout << "Agent 1 added with ID 1." << std::endl;
@@ -95,14 +98,14 @@ int main() {
         const AgentState* state = system.getAgent(1);
         if (state) {
             std::cout << "Agent 1 current position: (" << state->currentPosition.first << ", " << state->currentPosition.second << ")" << std::endl;
-            std::cout << "Agent 1 status: " << state->status << std::endl;
+            std::cout << "Agent 1 status: " << state->agentStatus << std::endl;
             std::cout << "Agent 1 path plan: ";
             for (const auto& point : state->pathPlan) {
                 std::cout << "(" << point.first << ", " << point.second << ") ";
             }
             std::cout << std::endl;
             std::cout << "Agent 1 flags: ";
-            for (const auto& flag : state->flags) {
+            for (const auto& flag : state->actions) {
                 std::cout << flag << " ";
             }
             std::cout << std::endl;

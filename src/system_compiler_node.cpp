@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <unordered_set>
+#include <vector>
 
 class SystemCompilerNode : public rclcpp::Node
 {
@@ -22,13 +24,13 @@ public:
         systemCompiler.start("halton_points.csv");
         systemCompiler.setLookahead(3);
         
-        try {
-            // Check if the index is within bounds
-            auto point = systemCompiler.getPointByIndex(0);
-            RCLCPP_INFO(this->get_logger(), "Point at index 0: (%f, %f)", point.first, point.second);
-        } catch (const std::out_of_range& e) {
-            RCLCPP_ERROR(this->get_logger(), "Error accessing Halton point: %s", e.what());
-        }
+        // try {
+        //     // Check if the index is within bounds
+        //     auto point = systemCompiler.getPointByIndex(0);
+        //     RCLCPP_INFO(this->get_logger(), "Point at index 0: (%f, %f)", point.first, point.second);
+        // } catch (const std::out_of_range& e) {
+        //     RCLCPP_ERROR(this->get_logger(), "Error accessing Halton point: %s", e.what());
+        // }
     
 
         this->lookahead_ = systemCompiler.getLookahead();
@@ -36,10 +38,28 @@ public:
         // Populate the Halton points table
         populateHaltonPointsTable();
 
+        int num_agents = this->declare_parameter<int>("num_agents", 1);
+
+        path_plan_sub_ = this->create_subscription<ltl_automaton_msgs::msg::PathPlan>(
+            "parsed_path_plan", 10,
+            std::bind(&SystemCompilerNode::pathPlanCallback, this, std::placeholders::_1));
+
         // Timer to simulate data compilation and database updates
-        timer_ = this->create_wall_timer(
-            std::chrono::seconds(1),
-            std::bind(&SystemCompilerNode::updateDatabase, this));
+        // timer_ = this->create_wall_timer(
+        //     std::chrono::seconds(1),
+        //     std::bind(&SystemCompilerNode::updateDatabase, this));
+
+        for (int i = 1; i <= num_agents; ++i) {
+            std::string topic_name = "/robot" + std::to_string(i) + "/parsed_path_plan";
+            auto subscription = this->create_subscription<interfaces_hmm_sim::msg::PathPlan>(
+                topic_name, 10,
+                [this, i](const interfaces_hmm_sim::msg::PathPlan::SharedPtr msg) {
+                    this->pathPlanCallback(i, msg);
+                });
+            path_plan_subscriptions_.push_back(subscription);
+        }
+
+        RCLCPP_INFO(this->get_logger(), "SystemCompilerNode initialized with %d agents.", num_agents);
     }
 
     ~SystemCompilerNode()
@@ -53,6 +73,7 @@ private:
     sqlite3 *db_;
     rclcpp::TimerBase::SharedPtr timer_;
     SystemCompiler systemCompiler;
+    std::unordered_set<int> known_agents_;
 
     void initializeDatabase()
     {
@@ -157,6 +178,16 @@ private:
             return;
         }
 
+        // Reset the auto-increment counter for the halton_points table
+        const char *resetIdSQL = "DELETE FROM sqlite_sequence WHERE name = 'halton_points';";
+        rc = sqlite3_exec(db_, resetIdSQL, nullptr, nullptr, &errMsg);
+        if (rc != SQLITE_OK)
+        {
+            RCLCPP_ERROR(this->get_logger(), "SQL error while resetting Halton points table ID counter: %s", errMsg);
+            sqlite3_free(errMsg);
+            return;
+        }
+
         // Insert each Halton point into the table
         for (const auto &point : systemCompiler.getHaltonPoints())
         {
@@ -174,6 +205,53 @@ private:
 
         RCLCPP_INFO(this->get_logger(), "Halton points table populated successfully.");
     }
+
+    void pathPlanCallback(int agent_id, const interfaces_hmm_sim::msg::PathPlan::SharedPtr msg)
+    {
+        AgentState state;
+
+        // Convert waypoints from geometry_msgs::msg::Point to std::pair<double, double>
+        for (const auto &point : msg->waypoints)
+        {
+            state.waypoints.emplace_back(point.x, point.y);
+        }
+
+        // Convert actions from unsigned char to char
+        state.actions = std::vector<char>(msg->actions.begin(), msg->actions.end());
+
+        // Copy index and cur_task
+        state.index = msg->index;
+        state.curTask = msg->cur_task;
+
+        // Populate additional fields (example logic, adjust as needed)
+        if (!state.waypoints.empty())
+        {
+            state.currentPosition = state.waypoints.front(); // Assume the first waypoint is the current position
+        }
+        state.planIndex = 0;       // Example: Initialize planIndex to 0
+        state.agentStatus = true;  // Example: Assume agent is active
+        state.taskStatus = true;   // Example: Assume task is not yet completed
+
+        // Check if the agent is already known
+        if (known_agents_.find(agent_id) == known_agents_.end())
+        {
+            // First time receiving a message for this agent
+            systemCompiler.addAgent(agent_id, state);
+            known_agents_.insert(agent_id);
+
+            RCLCPP_INFO(this->get_logger(), "Added agent %d.", agent_id);
+        }
+        else
+        {
+            // Update the existing agent
+            systemCompiler.updateAgent(agent_id, state);
+
+            RCLCPP_INFO(this->get_logger(), "Updated agent %d.", agent_id);
+        }
+    }
+
+    // rclcpp::Subscription<ltl_automaton_msgs::msg::PathPlan>::SharedPtr path_plan_sub_;
+    std::vector<rclcpp::Subscription<interfaces_hmm_sim::msg::PathPlan>::SharedPtr> path_plan_subscriptions_; // Store subscriptions
 };
 
 int main(int argc, char **argv)
